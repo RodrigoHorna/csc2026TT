@@ -200,3 +200,62 @@ Educational materials for CSC Latin America 2026.
 
 *CSC Latin America 2026 - Santiago, Chile*  
 *INAIT AI | Creative Commons Venezuela & Switzerland*
+
+
+
+---
+
+# CSC Latin America 2026 - Teaching Repo
+
+This repository contains the **analysis codebase** used in the lectures and demos,
+plus **self-contained exercise mini-projects** under `exercises/`.
+
+## Quick start
+
+Build (recommended: Ninja):
+
+```bash
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build -j$(nproc)
+```
+
+Run:
+
+```bash
+./build/analyze
+./build/event_processor
+```
+
+Run tests:
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+## Enable sanitizers
+
+```bash
+cmake -B build-asan -G Ninja -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON
+cmake --build build-asan -j$(nproc)
+ctest --test-dir build-asan --output-on-failure
+```
+
+## Exercises
+
+Each exercise is a **separate mini-project** with its own `CMakeLists.txt`.
+Go into the `starter/` folder and build from there.
+
+- `exercises/TT-E1-debugging-sanitizers/` (Sanitizers)
+- `exercises/SD-E1-parallel-event-processing/` (OpenMP + false sharing)
+- `exercises/SD-E2-benchmark-and-optimize/` (bench + optimize)
+- `exercises/TT-E2-docs-and-ci/` (docs + CI workflow)
+
+## Docs
+
+Docs are built using MkDocs:
+
+```bash
+pip install mkdocs mkdocs-material
+mkdocs serve
+```
+
