@@ -1,50 +1,50 @@
-# TT-E1: Debugging with Sanitizers (Broken Reconstruction)
+# TT-E1: Debugging with Sanitizers (ASan/UBSan)
 
-This mini-project is **intentionally buggy**. Your goal is to use tooling to find and fix:
-- Heap buffer overflow
-- Memory leak
-- Use-after-free
+**Timetable slot:** Tools and Techniques **E1** (60 minutes)
 
-## Build (normal)
+This exercise is a hands-on workflow for finding and fixing memory bugs using sanitizers, then preventing regressions with unit tests.
+
+## Learning objectives
+
+By the end you can:
+
+- Build with AddressSanitizer and UndefinedBehaviorSanitizer
+- Read a sanitizer report and locate the root cause in code
+- Fix the bug and validate the fix with unit tests (`ctest`)
+- Make a minimal, reviewable commit that would pass CI
+
+## Timebox plan (60 min)
+
+- 0–10: configure + build sanitizer build
+- 10–25: reproduce the sanitizer finding and identify the root cause
+- 25–45: implement the fix
+- 45–55: add or extend a unit test to lock the fix
+- 55–60: final run (`ctest` + executable) and commit message
+
+## Success criteria
+
+- `./analyze` runs with **no sanitizer findings**
+- `ctest` passes in the sanitizer build directory
+- At least one test covers the bug you fixed
+
+## Where to work
+
+Start in:
+
+- `starter/` (contains the buggy implementation)
+
+## Commands
 
 ```bash
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
-cmake --build build
-```
+cd exercises/TT-E1-debugging-sanitizers/starter
 
-Run the program:
-
-```bash
-./build/analyze
-```
-
-It may or may not crash. Undefined behaviour is not deterministic.
-
-## Enable AddressSanitizer / UBSan
-
-Re-configure with sanitizers enabled:
-
-```bash
 cmake -B build-asan -G Ninja -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON
-cmake --build build-asan
-```
+cmake --build build-asan -j"$(nproc)"
+ctest --test-dir build-asan --output-on-failure
 
-Run again:
-
-```bash
 ./build-asan/analyze
 ```
 
-Expected ASan failures (in typical order):
-1. `heap-buffer-overflow` in `TrackReconstructor::reconstruct()`
-2. After fixing the loop bound, a `heap-use-after-free` in `getBestTrack()`
-3. After fixing that, `LeakSanitizer: detected memory leaks`
-
-## Run tests (optional)
-
-```bash
-ctest --test-dir build-asan --output-on-failure
-```
-
-The test is expected to fail or crash until you fix the exercise code.
-
+## Stretch (only if you finish early)
+* Add one more test covering an edge case
+* Try a TSan build if the code uses concurrency
