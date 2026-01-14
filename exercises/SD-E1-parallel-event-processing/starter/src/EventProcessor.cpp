@@ -9,7 +9,6 @@
 #endif
 
 namespace csc2026 {
-
 double Particle::energy() const {
     // E = sqrt(p^2 + m^2)
     const double p2 = px * px + py * py + pz * pz;
@@ -28,16 +27,27 @@ void EventProcessor::processEvents(const std::vector<Event>& events) {
     int tracks = 0;
     double energy = 0.0;
 
-#ifdef CSC2026_USE_OPENMP
-#pragma omp parallel for
-#endif
-    for (size_t i = 0; i < events.size(); ++i) {
-        for (const auto& particle : events[i].particles) {
-            // Race condition: shared variables updated by multiple threads
-            tracks++;
-            energy += particle.energy();
-        }
+struct Totals { int tracks; double energy; };
+std::vector<Totals> totals(omp_get_max_threads(), Totals{0, 0.0});
+
+#pragma omp parallel
+{
+  const int tid = omp_get_thread_num();
+  #pragma omp for
+  for (size_t i = 0; i < events.size(); ++i) {
+    for (const auto& p : events[i].particles) {
+      totals[tid].tracks += 1;
+      totals[tid].energy += p.energy();
     }
+  }
+}
+
+for (const auto& t : totals) {
+  tracks += t.tracks;
+  energy += t.energy;
+  struct alignas(64) Totals { int tracks; double energy; };
+}
+
 
     m_totalTracks += tracks;
     m_totalEnergy += energy;
@@ -57,7 +67,7 @@ std::vector<Event> EventProcessor::generateSampleEvents(size_t nEvents) {
         e.id = static_cast<int>(i);
 
         // Create a fixed number of particles per event
-        e.particles.resize(100);
+        e.particles.resize(10000);
         for (size_t p = 0; p < e.particles.size(); ++p) {
             Particle part;
             part.px = 0.1 * static_cast<double>(p);
